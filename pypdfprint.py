@@ -206,6 +206,10 @@ class pypdfprint:
         win32api.ShellExecute(0, "print", file, None,  ".",  0)
         return
 
+    def mergeprintfiles(self,printlist):
+        # TO merge all pages to be printed into a sinogle pdf file 
+        return
+
 
 #testing
 if __name__ == "__main__":

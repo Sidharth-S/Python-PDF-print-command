@@ -8,6 +8,8 @@ import tempfile
 import os
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import re
+from PyPDF2 import PdfFileMerger
+
 
 
 
@@ -59,10 +61,10 @@ class pypdfprint:
 
         printlist = self.printlist(pagelist=pagelist,parameters=param_dict)
 
-        for i in printlist:
-            self.sendprint(i)
+        merge = self.mergeprintfiles(printlist)
+        print(merge)
 
-        os.rmdir(tempdir)
+        #print_cmd = self.sendprint(merge)
 
         pass
     
@@ -208,7 +210,17 @@ class pypdfprint:
 
     def mergeprintfiles(self,printlist):
         # TO merge all pages to be printed into a sinogle pdf file 
-        return
+        dir = pathlib.Path(printlist[0]).parent
+        
+        merger = PdfFileMerger()
+
+        for pdf in printlist:
+            merger.append(open(pdf, 'rb'))
+
+        fname = os.path.join(dir,"printset.pdf")
+        with open(fname, 'wb') as fout:
+            merger.write(fout)
+        return fname
 
 
 #testing

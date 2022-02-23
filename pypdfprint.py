@@ -1,53 +1,53 @@
 #imports
 from natsort import natsorted
-import win32api
+from win32api import ShellExecute
 import win32print
 import yaml
 import pathlib
 import tempfile
 import os
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
 import re
-from PyPDF2 import PdfFileMerger
 
 
-
+# Copyright Sidharth S sidharth.tradis@gmail.com
 
 #class
 class pypdfprint:
     def __init__(self,
                  file : str,
-                 printer = None,
-                 pages = "all",
-                 copy = 1 ,
-                 collate = True,
+                 printer     = None ,
+                 pages       = "all",
+                 copy        = 1 ,
+                 collate     = True ,
                  print_order = 0
                 ) :
         
         """
-        file -> Document path 
+        file => Path of the pdf document
 
-        printer -> Select which printer to print to [if None; preset default printer is used]
+        printer => specify which printer to print to [if None; preset default printer  is used]
 
-        pages -> Which pages to be printed eg.-('all','1','1-5,12','odd','even') [Default:'all']
+        pages => Which pages to be printed eg.-('all','1','1-5,12','odd','even') [Default:'all']
 
-        copy -> Number of copies required [Default: 1]
+        copy => Number of copies required [Default: 1]
 
-        collate -> Whether collate the pages or not [Default: True]
+        collate => Whether collate the pages or not [Default: True]
 
-        print_order -> Whether to print normally or in reverse [Default: 0 (First page first) ] (In reverse(1): first page is printed last, such that it can be taken directly without having to rearrange the pages.)
+        print_order => Whether to print normally or in reverse [Default: 0 (First page prints first) ] (In reverse(1): first page is printed last, such that it can be taken directly without having to rearrange the pages.)
         """
         
         self.default_printer = self.settingsload()['defprinter']
+
         if printer : 
             self.default_printer = printer
         win32print.SetDefaultPrinter(self.default_printer)
 
         param_dict = {
-            'file' : file,
+            'file'    : file,
             'printer' : printer, 
-            'pages' : pages, 
-            'copy' : copy, 
+            'pages'   : pages, 
+            'copy'    : copy, 
             'collate' : collate, 
             'print_order' : print_order, 
         }
@@ -62,10 +62,8 @@ class pypdfprint:
         printlist = self.printlist(pagelist=pagelist,parameters=param_dict)
 
         merge = self.mergeprintfiles(printlist)
-        print(merge)
 
-        #print_cmd = self.sendprint(merge)
-
+        self.sendprint(merge)
         pass
     
 
@@ -84,7 +82,7 @@ class pypdfprint:
         if parameters['print_order'] not in [0,1]:
             raise ValueError("Impossible event for print_order")
         
-        pagenum_pattern = '\d{1,}((-\d{1,})|(,\d{1,})?){1,}'
+        pagenum_pattern = '\d{1,}((-\d{1,})|(,\d{1,})?){1,}' #regex
         if not re.fullmatch(pagenum_pattern,parameters['pages']) and parameters['pages'] not in ['all','odd','even']:
             raise ValueError("Impossible event for pages")
         
@@ -107,7 +105,7 @@ class pypdfprint:
         return all_printers
     
     def set_printer(self,printer_name):
-        data_dict = {'defrinter':printer_name}
+        data_dict = {'defprinter':printer_name}
         
         with open('settings.yaml', 'w') as outfile:
             yaml.dump(data_dict, outfile, default_flow_style=False)
@@ -205,15 +203,14 @@ class pypdfprint:
         return arr
     
     def sendprint(self,file):
-        win32api.ShellExecute(0, "print", file, None,  ".",  0)
+        # via win32api
+        ShellExecute(0, "print", file, None,  ".",  0)
         return
 
     def mergeprintfiles(self,printlist):
         # TO merge all pages to be printed into a sinogle pdf file 
         dir = pathlib.Path(printlist[0]).parent
-        
         merger = PdfFileMerger()
-
         for pdf in printlist:
             merger.append(open(pdf, 'rb'))
 
@@ -229,3 +226,5 @@ if __name__ == "__main__":
     testfile2 = "test/t2.pdf"
 
     x = pypdfprint(file = testfile1,copy = 1,pages='1,2',collate=True,print_order=0,printer='EPSON5BA3A3 (L3150 Series)')
+
+
